@@ -1,0 +1,7 @@
+CONFIG = {u'desktop_user': u'username',
+          u'payoneer': {u'username': u'username',
+                        u'password': u'password'},
+          u'odesk': {u'username': u'username',
+                     u'password': u'password'},
+          u'bwc': {u'phone': u'phone',
+                   u'password': u'password'}}

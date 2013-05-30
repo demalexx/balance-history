@@ -1,0 +1,82 @@
+<html>
+    <head>
+        <title>История (1 USD = %(usdrub)s р. от %(usdrub-date)s)</title>
+
+        <script type="text/javascript" src="dygraph-combined.js"></script>
+
+        <style type="text/css">
+            .graph {
+                width: 98%;
+                height: 375px;
+                margin: 1%;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div id="bank-graph" class="graph"></div>
+        <div id="mobile-graph" class="graph"></div>
+
+        <script type="text/javascript">
+            var gbank = new Dygraph(document.getElementById("bank-graph"),
+                    "%(bank-data)s",
+                    {'showRangeSelector': true,
+                     'labelsDivWidth': 450,
+                     'labelsDivStyles': {'textAlign': 'right'},
+                     'legend': 'always',
+                     'axes': {
+                         'x': {
+                             'valueFormatter': function(x) {
+                                 return format_datetime(new Date(x));
+                             }
+                         },
+                         'y': {
+                             'valueFormatter': function(y) {
+                                 return '$' + y;
+                             },
+                             'axisLabelFormatter': function(y) {
+                                 return '$' + y;
+                             }
+                         }
+                     }}
+            );
+
+            var gmobile = new Dygraph(document.getElementById("mobile-graph"),
+                    "%(mobile-data)s",
+                    {'showRangeSelector': true,
+                     'labelsDivWidth': 450,
+                     'labelsDivStyles': {'textAlign': 'right'},
+                     'legend': 'always',
+                     'axes': {
+                         'x': {
+                             'valueFormatter': function(x) {
+                                 return format_datetime(new Date(x));
+                             }
+                         },
+                         'y': {
+                             'valueFormatter': function(y) {
+                                 return y + ' р.';
+                             },
+                             'axisLabelFormatter': function(y) {
+                                 return y + ' р.';
+                             }
+                         }
+                     }}
+            );
+
+            function format_datetime(value) {
+                // 30.05.2013 21:19
+                return _0(value.getDate()) + '.' + _0(value.getMonth()+1) + '.' + (value.getYear()+1900) +
+                        ' ' + _0(value.getHours()) + ':' + _0(value.getMinutes());
+            }
+
+            function _0(value) {
+                var res = value.toString();
+                if (value < 10) {
+                    res = '0' + res;
+                }
+                return res;
+            }
+        </script>
+    </body>
+</html>
