@@ -100,10 +100,14 @@ class Payoneer(BaseSource):
     ACCOUNT_URL = u'https://myaccount.payoneer.com/MainPage/LoadList.aspx'
 
     def get_balance(self):
+        # Payoneer removed static login. User could login only using js.
+        # Mechanize doesn't support it. Return $0.0 temporary
+        return Currency(self.string_to_decimal('0.0'), 'USD')
+
         self.open_with_retry(self.LOGIN_URL, u'login')
 
         logging.debug(u'Filling login form')
-        self.browser.select_form(name=u'form1')
+        self.browser.select_form(nr=0)
         self.browser.new_control(u'text', u'__EVENTTARGET', {})
         self.browser[u'__EVENTTARGET'] = u'btLogin'
         self.browser[u'txtUserName'] = CONFIG[u'payoneer'][u'username']
@@ -140,7 +144,7 @@ class ODesk(BaseSource):
 
         logging.debug(u'Parsing page and extracting balance')
         html = etree.HTML(page)
-        raw_balance = CSSSelector(u'div.oMain tr.oTxtMega.txtMiddle span.oPos')(html)[0].text
+        raw_balance = CSSSelector(u'div.oMain div.oTxtMega span.oPos')(html)[0].text
 
         return Currency(self.string_to_decimal(raw_balance), u'USD')
 
