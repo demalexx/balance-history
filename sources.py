@@ -8,6 +8,10 @@ from decimal import Decimal, InvalidOperation
 from lxml import etree
 from lxml.cssselect import CSSSelector
 from mechanize import Browser
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions
 
 from config import CONFIG
 
@@ -100,27 +104,37 @@ class Payoneer(BaseSource):
     ACCOUNT_URL = u'https://myaccount.payoneer.com/MainPage/LoadList.aspx'
 
     def get_balance(self):
-        # Payoneer removed static login. User could login only using js.
-        # Mechanize doesn't support it. Return $0.0 temporary
-        return Currency(self.string_to_decimal('0.0'), 'USD')
+        driver = None
 
-        self.open_with_retry(self.LOGIN_URL, u'login')
+        try:
+            logging.debug(u'Creating ChromeWebDriver')
+            driver = webdriver.Chrome()
 
-        logging.debug(u'Filling login form')
-        self.browser.select_form(nr=0)
-        self.browser.new_control(u'text', u'__EVENTTARGET', {})
-        self.browser[u'__EVENTTARGET'] = u'btLogin'
-        self.browser[u'txtUserName'] = CONFIG[u'payoneer'][u'username']
-        self.browser[u'txtPassword'] = CONFIG[u'payoneer'][u'password']
+            logging.debug(u'Opening URL: %s', self.LOGIN_URL)
+            driver.get(self.LOGIN_URL)
 
-        logging.debug(u'Submitting login form')
-        self.browser.submit()
+            logging.debug(u'Filling login form')
+            login = driver.find_element_by_id(u'txtUserName')
+            login.send_keys(CONFIG[u'payoneer'][u'username'])
 
-        page = self.open_with_retry(self.ACCOUNT_URL, u'account')
+            passw = driver.find_element_by_id(u'txtPassword')
+            passw.send_keys(CONFIG[u'payoneer'][u'password'])
 
-        logging.debug(u'Parsing page and extracting balance')
-        html = etree.HTML(page)
-        raw_balance = CSSSelector(u'strong#cardBalanceText span')(html)[0].text
+            logging.debug(u'Submitting login form')
+            driver.find_element_by_id(u'btLogin').click()
+
+            balance_selector = u'td#CardBalanceTableCell > strong'
+
+            WebDriverWait(driver, 10).until(
+                expected_conditions.presence_of_element_located((By.CSS_SELECTOR,
+                                                                 balance_selector)))
+
+            logging.debug(u'Parsing page and extracting balance')
+            html = etree.HTML(driver.page_source)
+            raw_balance = CSSSelector(balance_selector)(html)[0].text
+        finally:
+            if driver:
+                driver.quit()
 
         return Currency(self.string_to_decimal(raw_balance), u'USD')
 
